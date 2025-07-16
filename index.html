@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Cost Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 420px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .tab-nav {
+            display: flex;
+            background: #f5f5f5;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-btn.active {
+            background: white;
+            border-bottom-color: #4CAF50;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+            animation: fadeIn 0.3s;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-bottom: 10px;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f44336 0%, #da190b 100%);
+        }
+
+        .ingredient-item, .menu-item {
+            background: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .ingredient-item h3, .menu-item h3 {
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .ingredient-info, .menu-info {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .cost-breakdown {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .cost-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 5px 0;
+        }
+
+        .cost-row.total {
+            border-top: 2px solid #4CAF50;
+            padding-top: 10px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #888;
+            padding: 40px 20px;
+        }
+
+        .ingredient-selector {
+            margin-bottom: 15px;
+        }
+
+        .selected-ingredients {
+            background: #f0f8f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .selected-ingredient {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .selected-ingredient:last-child {
+            border-bottom: none;
+        }
+
+        .remove-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .quantity-input {
+            width: 80px;
+            padding: 4px;
+            margin-left: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .setup-step {
+            margin-bottom: 25px;
+        }
+
+        .setup-step h3 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+
+        .setup-step ol {
+            margin-bottom: 15px;
+        }
+
+        .setup-step li {
+            margin-bottom: 5px;
+        }
+
+        .config-code {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            border-left: 4px solid #4CAF50;
+            overflow-x: auto;
+        }
+
+        /* Home Page Styles */
+        .home-container {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .logo-section {
+            margin-bottom: 30px;
+        }
+
+        .logo-placeholder {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 20px;
+            border: 3px dashed #ddd;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f9f9f9;
+        }
+
+        .logo-placeholder:hover {
+            border-color: #4CAF50;
+            background: #f0f8f0;
+        }
+
+        .logo-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .logo-placeholder p {
+            font-size: 12px;
+            color: #666;
+            margin: 0;
+        }
+
+        .cafe-logo {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 20px;
+            border: 4px solid #4CAF50;
+            cursor: pointer;
+        }
+
+        .cafe-info {
+            margin-bottom: 30px;
+        }
+
+        .cafe-name-input {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            border: none;
+            border-bottom: 2px solid #e1e1e1;
+            background: transparent;
+            margin-bottom: 10px;
+            padding: 10px;
+            width: 100%;
+            max-width: 300px;
+            transition: border-color 0.3s;
+        }
+
+        .cafe-name-input:focus {
+            outline: none;
+            border-bottom-color: #4CAF50;
+        }
+
+        .cafe-name-input::placeholder {
+            color: #999;
+        }
+
+        .app-subtitle {
+            font-size: 14px;
+            color: #666;
+            margin: 0;
+        }
+
+        .nav-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .nav-btn {
+            background: white;
+            border: 2px solid #e1e1e1;
+            border-radius: 12px;
+            padding: 20px 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .nav-btn:hover {
+            border-color: #4CAF50;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+        }
+
+        .nav-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .nav-btn h3 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .nav-btn p {
+            margin: 0;
+            font-size: 12px;
+            color: #666;
+            line-height: 1.3;
+        }
+
+        .ingredients-btn:hover { border-color: #FF9800; }
+        .menu-btn:hover { border-color: #2196F3; }
+        .calculator-btn:hover { border-color: #4CAF50; }
+        .backup-btn:hover { border-color: #9C27B0; }
+
+        .quick-stats {
+            display: flex;
+            justify-content: space-around;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            display: block;
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        @media (max-width: 480px) {
+            .nav-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .quick-stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍽️ Food Cost Manager</h1>
+            <p>Track ingredients, costs & profits</p>
+            <div id="connectionStatus" style="font-size: 12px; margin-top: 5px;">
+                <span id="statusText">🔄 Connecting to Firebase...</span>
+            </div>
+        </div>
+
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('home')">Home</button>
+            <button class="tab-btn" onclick="switchTab('ingredients')">Ingredients</button>
+            <button class="tab-btn" onclick="switchTab('menu')">Menu Items</button>
+            <button class="tab-btn" onclick="switchTab('calculator')">Calculator</button>
+            <button class="tab-btn" onclick="switchTab('backup')">Backup</button>
+        </div>
+
+        <!-- Home Tab -->
+        <div id="home" class="tab-content active">
+            <div class="home-container">
+                <div class="logo-section">
+                    <div class="logo-placeholder" id="logoPlaceholder">
+                        <div class="logo-icon">🍽️</div>
+                        <p>Tap to add your cafe logo</p>
+                        <input type="file" id="logoUpload" accept="image/*" style="display: none;">
+                    </div>
+                    <img id="cafeLogoImg" class="cafe-logo" style="display: none;">
+                </div>
+                
+                <div class="cafe-info">
+                    <input type="text" id="cafeName" class="cafe-name-input" placeholder="Enter your cafe name" maxlength="50">
+                    <p class="app-subtitle">Professional Food Cost Management</p>
+                </div>
+
+                <div class="nav-buttons">
+                    <button class="nav-btn ingredients-btn" onclick="switchTab('ingredients')">
+                        <div class="nav-icon">🥕</div>
+                        <h3>Ingredients</h3>
+                        <p>Manage inventory & costs</p>
+                    </button>
+                    
+                    <button class="nav-btn menu-btn" onclick="switchTab('menu')">
+                        <div class="nav-icon">📋</div>
+                        <h3>Menu Items</h3>
+                        <p>Create dishes & recipes</p>
+                    </button>
+                    
+                    <button class="nav-btn calculator-btn" onclick="switchTab('calculator')">
+                        <div class="nav-icon">💰</div>
+                        <h3>Calculator</h3>
+                        <p>Profit margins & VAT</p>
+                    </button>
+                    
+                    <button class="nav-btn backup-btn" onclick="switchTab('backup')">
+                        <div class="nav-icon">📊</div>
+                        <h3>Reports</h3>
+                        <p>Export & backup data</p>
+                    </button>
+                </div>
+                
+                <div class="quick-stats" id="quickStats">
+                    <div class="stat-item">
+                        <span class="stat-number" id="ingredientCount">0</span>
+                        <span class="stat-label">Ingredients</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="menuCount">0</span>
+                        <span class="stat-label">Menu Items</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="avgMargin">0%</span>
+                        <span class="stat-label">Avg Margin</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ingredients Tab -->
+        <div id="ingredients" class="tab-content">
+            <h2>Add Ingredient</h2>
+            <form id="ingredientForm">
+                <div class="form-group">
+                    <label for="ingredientName">Ingredient Name</label>
+                    <input type="text" id="ingredientName" required>
+                </div>
+                <div class="form-group">
+                    <label for="ingredientCost">Cost per Unit (£)</label>
+                    <input type="number" id="ingredientCost" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="ingredientUnit">Unit Type</label>
+                    <select id="ingredientUnit" required>
+                        <option value="">Select unit</option>
+                        <option value="kg">Kilogram (kg)</option>
+                        <option value="g">Gram (g)</option>
+                        <option value="l">Litre (l)</option>
+                        <option value="ml">Millilitre (ml)</option>
+                        <option value="piece">Piece</option>
+                        <option value="dozen">Dozen</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="portionSize">Standard Portion Size</label>
+                    <input type="number" id="portionSize" step="0.01" required>
+                </div>
+                <button type="submit" class="btn">Add Ingredient</button>
+            </form>
+
+            <h2 style="margin-top: 30px;">Your Ingredients</h2>
+            <div id="ingredientsList"></div>
+        </div>
+
+        <!-- Menu Items Tab -->
+        <div id="menu" class="tab-content">
+            <h2>Create Menu Item</h2>
+            <form id="menuForm">
+                <div class="form-group">
+                    <label for="menuName">Menu Item Name</label>
+                    <input type="text" id="menuName" required>
+                </div>
+                <div class="form-group">
+                    <label for="sellingPrice">Selling Price (£)</label>
+                    <input type="number" id="sellingPrice" step="0.01" required>
+                </div>
+                
+                <div class="ingredient-selector">
+                    <label>Add Ingredients</label>
+                    <select id="ingredientSelect">
+                        <option value="">Select ingredient to add</option>
+                    </select>
+                </div>
+
+                <div id="selectedIngredients" class="selected-ingredients" style="display: none;">
+                    <h4>Selected Ingredients:</h4>
+                    <div id="selectedIngredientsList"></div>
+                </div>
+
+                <button type="submit" class="btn">Create Menu Item</button>
+            </form>
+
+            <h2 style="margin-top: 30px;">Your Menu Items</h2>
+            <div id="menuItemsList"></div>
+        </div>
+
+        <!-- Calculator Tab -->
+        <div id="calculator" class="tab-content">
+            <h2>Cost Calculator</h2>
+            <div class="form-group">
+                <label for="vatRate">VAT Rate (%)</label>
+                <input type="number" id="vatRate" value="20" step="0.1">
+            </div>
+            
+            <div class="form-group">
+                <label for="menuItemSelect">Select Menu Item</label>
+                <select id="menuItemSelect">
+                    <option value="">Choose a menu item</option>
+                </select>
+            </div>
+
+            <div id="costBreakdown" class="cost-breakdown" style="display: none;">
+                <h3>Cost Breakdown</h3>
+                <div id="breakdownContent"></div>
+            </div>
+        </div>
+
+        <!-- Backup Tab -->
+        <div id="backup" class="tab-content">
+            <h2>📄 Backup & Restore</h2>
+            
+            <div style="margin-bottom: 30px;">
+                <h3>Export to Google Docs</h3>
+                <p style="color: #666; margin-bottom: 15px;">Generate a formatted report you can copy to Google Docs</p>
+                <button class="btn" onclick="exportToGoogleDocs()">📋 Generate Google Docs Report</button>
+                
+                <div id="exportOutput" style="display: none; margin-top: 15px;">
+                    <label>Copy this text to your Google Doc:</label>
+                    <textarea id="exportText" style="width: 100%; height: 300px; margin-top: 10px; padding: 10px; border: 2px solid #e1e1e1; border-radius: 8px; font-family: monospace; font-size: 12px;"></textarea>
+                    <button class="btn" onclick="copyToClipboard()" style="margin-top: 10px;">📋 Copy to Clipboard</button>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 30px;">
+                <h3>Download JSON Backup</h3>
+                <p style="color: #666; margin-bottom: 15px;">Download your data as a JSON file for safekeeping</p>
+                <button class="btn" onclick="downloadBackup()">💾 Download Backup File</button>
+            </div>
+
+            <div style="margin-bottom: 30px;">
+                <h3>Restore from JSON</h3>
+                <p style="color: #666; margin-bottom: 15px;">Upload a previously downloaded backup file</p>
+                <input type="file" id="restoreFile" accept=".json" style="margin-bottom: 10px;">
+                <button class="btn" onclick="restoreBackup()">🔄 Restore Data</button>
+            </div>
+
+            <div style="margin-bottom: 30px;">
+                <h3>Reset All Data</h3>
+                <p style="color: #666; margin-bottom: 15px;">⚠️ This will permanently delete all your ingredients and menu items</p>
+                <button class="btn btn-danger" onclick="resetAllData()">🗑️ Reset Everything</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAvy-FpXYXYFNrtRGN5ZR_mHQIwFam9Rms",
+            authDomain: "food-cost-app-35295.firebaseapp.com",
+            databaseURL: "https://food-cost-app-35295-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "food-cost-app-35295",
+            storageBucket: "food-cost-app-35295.firebasestorage.app",
+            messagingSenderId: "827516328302",
+            appId: "1:827516328302:web:11d41ee5d5c6e42c4fc97f",
+            measurementId: "G-G2P08LE9HR"
+        };
+
+        // Initialize Firebase
+        let db, auth;
+        let ingredients = [];
+        let menuItems = [];
+        let selectedIngredients = [];
+        let isFirebaseReady = false;
+
+        function initializeFirebase() {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                auth = firebase.auth();
+                
+                // Sign in anonymously for simplicity
+                auth.signInAnonymously().then(() => {
+                    console.log('Firebase authenticated');
+                    isFirebaseReady = true;
+                    updateConnectionStatus("🟢 Connected - Real-time sync", "green");
+                    loadDataFromFirebase();
+                    setupRealtimeListeners();
+                }).catch((error) => {
+                    console.error('Firebase auth error:', error);
+                    updateConnectionStatus("🔴 Connection failed", "red");
+                    fallbackToLocalStorage();
+                });
+            } catch (error) {
+                console.error('Firebase initialization error:', error);
+                updateConnectionStatus("🔴 Firebase error", "red");
+                fallbackToLocalStorage();
+            }
+        }
+
+        function updateConnectionStatus(text, color) {
+            const statusElement = document.getElementById('statusText');
+            
+            if (statusElement) {
+                statusElement.textContent = text;
+                statusElement.style.color = color;
+            }
+        }
+
+        function fallbackToLocalStorage() {
+            console.log('Using localStorage as fallback');
+            updateConnectionStatus("📱 Local storage only", "orange");
+            ingredients = JSON.parse(localStorage.getItem('ingredients') || '[]');
+            menuItems = JSON.parse(localStorage.getItem('menuItems') || '[]');
+            displayIngredients();
+            displayMenuItems();
+            populateIngredientSelect();
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (tabName === 'calculator') {
+                populateMenuSelect();
+            } else if (tabName === 'backup') {
+                // Reset any previous export display
+                document.getElementById('exportOutput').style.display = 'none';
+            } else if (tabName === 'home') {
+                updateQuickStats();
+            }
+        }
+
+        // Home Page Functions
+        function initializeHomePage() {
+            // Logo upload functionality
+            const logoPlaceholder = document.getElementById('logoPlaceholder');
+            const logoUpload = document.getElementById('logoUpload');
+            const cafeLogoImg = document.getElementById('cafeLogoImg');
+            
+            logoPlaceholder.addEventListener('click', () => {
+                logoUpload.click();
+            });
+            
+            cafeLogoImg.addEventListener('click', () => {
+                logoUpload.click();
+            });
+            
+            logoUpload.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const logoData = e.target.result;
+                        cafeLogoImg.src = logoData;
+                        cafeLogoImg.style.display = 'block';
+                        logoPlaceholder.style.display = 'none';
+                        localStorage.setItem('cafeLogo', logoData);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Cafe name functionality
+            const cafeNameInput = document.getElementById('cafeName');
+            cafeNameInput.addEventListener('input', (e) => {
+                localStorage.setItem('cafeName', e.target.value);
+            });
+            
+            // Load saved data
+            loadCafeData();
+            updateQuickStats();
+        }
+        
+        function loadCafeData() {
+            // Load cafe name
+            const savedName = localStorage.getItem('cafeName');
+            if (savedName) {
+                document.getElementById('cafeName').value = savedName;
+            }
+            
+            // Load cafe logo
+            const savedLogo = localStorage.getItem('cafeLogo');
+            if (savedLogo) {
+                const cafeLogoImg = document.getElementById('cafeLogoImg');
+                const logoPlaceholder = document.getElementById('logoPlaceholder');
+                cafeLogoImg.src = savedLogo;
+                cafeLogoImg.style.display = 'block';
+                logoPlaceholder.style.display = 'none';
+            }
+        }
+        
+        function updateQuickStats() {
+            // Update ingredient count
+            document.getElementById('ingredientCount').textContent = ingredients.length;
+            
+            // Update menu item count
+            document.getElementById('menuCount').textContent = menuItems.length;
+            
+            // Calculate average profit margin
+            if (menuItems.length > 0) {
+                const avgMargin = menuItems.reduce((sum, item) => {
+                    const totalCost = item.ingredients.reduce((sum, ing) => 
+                        sum + (ing.cost / ing.portionSize * ing.quantity), 0);
+                    const profit = item.sellingPrice - totalCost;
+                    return sum + ((profit / item.sellingPrice) * 100);
+                }, 0) / menuItems.length;
+                
+                document.getElementById('avgMargin').textContent = avgMargin.toFixed(1) + '%';
+            } else {
+                document.getElementById('avgMargin').textContent = '0%';
+            }
+        }
+
+        // Firebase Data Functions
+        function loadDataFromFirebase() {
+            if (!isFirebaseReady) return;
+
+            // Load ingredients
+            db.collection('ingredients').orderBy('name').get().then((snapshot) => {
+                ingredients = [];
+                snapshot.forEach((doc) => {
+                    ingredients.push({ id: doc.id, ...doc.data() });
+                });
+                displayIngredients();
+                populateIngredientSelect();
+            }).catch((error) => {
+                console.error('Error loading ingredients:', error);
+            });
+
+            // Load menu items
+            db.collection('menuItems').orderBy('name').get().then((snapshot) => {
+                menuItems = [];
+                snapshot.forEach((doc) => {
+                    menuItems.push({ id: doc.id, ...doc.data() });
+                });
+                displayMenuItems();
+            }).catch((error) => {
+                console.error('Error loading menu items:', error);
+            });
+        }
+
+        function setupRealtimeListeners() {
+            if (!isFirebaseReady) return;
+
+            // Listen for ingredient changes
+            db.collection('ingredients').onSnapshot((snapshot) => {
+                ingredients = [];
+                snapshot.forEach((doc) => {
+                    ingredients.push({ id: doc.id, ...doc.data() });
+                });
+                displayIngredients();
+                populateIngredientSelect();
+            });
+
+            // Listen for menu item changes
+            db.collection('menuItems').onSnapshot((snapshot) => {
+                menuItems = [];
+                snapshot.forEach((doc) => {
+                    menuItems.push({ id: doc.id, ...doc.data() });
+                });
+                displayMenuItems();
+                populateMenuSelect();
+            });
+        }
+
+        function saveIngredientToFirebase(ingredient) {
+            if (!isFirebaseReady) {
+                // Fallback to localStorage
+                ingredients.push(ingredient);
+                localStorage.setItem('ingredients', JSON.stringify(ingredients));
+                displayIngredients();
+                populateIngredientSelect();
+                return;
+            }
+
+            db.collection('ingredients').add(ingredient).then((docRef) => {
+                console.log('Ingredient saved:', docRef.id);
+            }).catch((error) => {
+                console.error('Error saving ingredient:', error);
+                alert('Error saving ingredient. Please try again.');
+            });
+        }
+
+        function saveMenuItemToFirebase(menuItem) {
+            if (!isFirebaseReady) {
+                // Fallback to localStorage
+                menuItems.push(menuItem);
+                localStorage.setItem('menuItems', JSON.stringify(menuItems));
+                displayMenuItems();
+                return;
+            }
+
+            db.collection('menuItems').add(menuItem).then((docRef) => {
+                console.log('Menu item saved:', docRef.id);
+            }).catch((error) => {
+                console.error('Error saving menu item:', error);
+                alert('Error saving menu item. Please try again.');
+            });
+        }
+
+        function deleteIngredientFromFirebase(id) {
+            if (!isFirebaseReady) {
+                // Fallback to localStorage
+                ingredients = ingredients.filter(ingredient => ingredient.id !== id);
+                localStorage.setItem('ingredients', JSON.stringify(ingredients));
+                displayIngredients();
+                populateIngredientSelect();
+                return;
+            }
+
+            db.collection('ingredients').doc(id).delete().then(() => {
+                console.log('Ingredient deleted');
+            }).catch((error) => {
+                console.error('Error deleting ingredient:', error);
+                alert('Error deleting ingredient. Please try again.');
+            });
+        }
+
+        function deleteMenuItemFromFirebase(id) {
+            if (!isFirebaseReady) {
+                // Fallback to localStorage
+                menuItems = menuItems.filter(item => item.id !== id);
+                localStorage.setItem('menuItems', JSON.stringify(menuItems));
+                displayMenuItems();
+                populateMenuSelect();
+                return;
+            }
+
+            db.collection('menuItems').doc(id).delete().then(() => {
+                console.log('Menu item deleted');
+            }).catch((error) => {
+                console.error('Error deleting menu item:', error);
+                alert('Error deleting menu item. Please try again.');
+            });
+        }
+
+        // Save data to localStorage (fallback)
+        function saveData() {
+            localStorage.setItem('ingredients', JSON.stringify(ingredients));
+            localStorage.setItem('menuItems', JSON.stringify(menuItems));
+        }
+
+        // Add ingredient
+        document.getElementById('ingredientForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const ingredient = {
+                name: document.getElementById('ingredientName').value,
+                cost: parseFloat(document.getElementById('ingredientCost').value),
+                unit: document.getElementById('ingredientUnit').value,
+                portionSize: parseFloat(document.getElementById('portionSize').value),
+                createdAt: new Date().toISOString()
+            };
+            
+            saveIngredientToFirebase(ingredient);
+            this.reset();
+        });
+
+        // Display ingredients
+        function displayIngredients() {
+            const container = document.getElementById('ingredientsList');
+            
+            if (ingredients.length === 0) {
+                container.innerHTML = '<div class="empty-state">No ingredients added yet</div>';
+            } else {
+                container.innerHTML = ingredients.map(ingredient => {
+                    const costPerPortion = (ingredient.cost / ingredient.portionSize).toFixed(3);
+                    return `
+                        <div class="ingredient-item">
+                            <h3>${ingredient.name}</h3>
+                            <div class="ingredient-info">
+                                Cost: £${ingredient.cost} per ${ingredient.unit}<br>
+                                Portion: ${ingredient.portionSize} ${ingredient.unit}<br>
+                                Cost per portion: £${costPerPortion}
+                            </div>
+                            <button class="btn btn-danger" style="margin-top: 10px;" onclick="deleteIngredient('${ingredient.id}')">Delete</button>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            // Update quick stats
+            updateQuickStats();
+        }
+
+        // Delete ingredient
+        function deleteIngredient(id) {
+            if (confirm('Are you sure you want to delete this ingredient?')) {
+                deleteIngredientFromFirebase(id);
+            }
+        }
+
+        // Populate ingredient select
+        function populateIngredientSelect() {
+            const select = document.getElementById('ingredientSelect');
+            select.innerHTML = '<option value="">Select ingredient to add</option>' +
+                ingredients.map(ingredient => 
+                    `<option value="${ingredient.id}">${ingredient.name} (£${(ingredient.cost / ingredient.portionSize).toFixed(3)} per portion)</option>`
+                ).join('');
+        }
+
+        // Add ingredient to menu item
+        document.getElementById('ingredientSelect').addEventListener('change', function() {
+            const ingredientId = this.value;
+            if (!ingredientId) return;
+            
+            const ingredient = ingredients.find(i => i.id === ingredientId);
+            if (!ingredient) return;
+            
+            const existing = selectedIngredients.find(i => i.id === ingredientId);
+            if (existing) {
+                alert('Ingredient already added');
+                return;
+            }
+            
+            selectedIngredients.push({
+                ...ingredient,
+                quantity: 1
+            });
+            
+            displaySelectedIngredients();
+            this.value = '';
+        });
+
+        // Display selected ingredients
+        function displaySelectedIngredients() {
+            const container = document.getElementById('selectedIngredients');
+            const list = document.getElementById('selectedIngredientsList');
+            
+            if (selectedIngredients.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            container.style.display = 'block';
+            list.innerHTML = selectedIngredients.map(ingredient => {
+                const cost = (ingredient.cost / ingredient.portionSize * ingredient.quantity).toFixed(3);
+                return `
+                    <div class="selected-ingredient">
+                        <span>${ingredient.name} x${ingredient.quantity} portions</span>
+                        <div>
+                            <input type="number" class="quantity-input" value="${ingredient.quantity}" 
+                                   onchange="updateIngredientQuantity('${ingredient.id}', this.value)" min="0.1" step="0.1">
+                            <span>£${cost}</span>
+                            <button class="remove-btn" onclick="removeSelectedIngredient('${ingredient.id}')">×</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Update ingredient quantity
+        function updateIngredientQuantity(id, quantity) {
+            const ingredient = selectedIngredients.find(i => i.id === id);
+            if (ingredient) {
+                ingredient.quantity = parseFloat(quantity) || 0.1;
+                displaySelectedIngredients();
+            }
+        }
+
+        // Remove selected ingredient
+        function removeSelectedIngredient(id) {
+            selectedIngredients = selectedIngredients.filter(i => i.id !== id);
+            displaySelectedIngredients();
+        }
+
+        // Create menu item
+        document.getElementById('menuForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (selectedIngredients.length === 0) {
+                alert('Please add at least one ingredient');
+                return;
+            }
+            
+            const menuItem = {
+                name: document.getElementById('menuName').value,
+                sellingPrice: parseFloat(document.getElementById('sellingPrice').value),
+                ingredients: [...selectedIngredients],
+                createdAt: new Date().toISOString()
+            };
+            
+            saveMenuItemToFirebase(menuItem);
+            selectedIngredients = [];
+            displaySelectedIngredients();
+            this.reset();
+        });
+
+        // Display menu items
+        function displayMenuItems() {
+            const container = document.getElementById('menuItemsList');
+            
+            if (menuItems.length === 0) {
+                container.innerHTML = '<div class="empty-state">No menu items created yet</div>';
+            } else {
+                container.innerHTML = menuItems.map(item => {
+                    const totalCost = item.ingredients.reduce((sum, ing) => 
+                        sum + (ing.cost / ing.portionSize * ing.quantity), 0);
+                    const profit = item.sellingPrice - totalCost;
+                    const profitMargin = ((profit / item.sellingPrice) * 100).toFixed(1);
+                    
+                    return `
+                        <div class="menu-item">
+                            <h3>${item.name}</h3>
+                            <div class="menu-info">
+                                Selling Price: £${item.sellingPrice.toFixed(2)}<br>
+                                Food Cost: £${totalCost.toFixed(2)}<br>
+                                Profit: £${profit.toFixed(2)} (${profitMargin}%)<br>
+                                Ingredients: ${item.ingredients.length}
+                            </div>
+                            <button class="btn btn-danger" style="margin-top: 10px;" onclick="deleteMenuItem('${item.id}')">Delete</button>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            // Update quick stats
+            updateQuickStats();
+        }
+
+        // Delete menu item
+        function deleteMenuItem(id) {
+            if (confirm('Are you sure you want to delete this menu item?')) {
+                deleteMenuItemFromFirebase(id);
+            }
+        }
+
+        // Populate menu select for calculator
+        function populateMenuSelect() {
+            const select = document.getElementById('menuItemSelect');
+            select.innerHTML = '<option value="">Choose a menu item</option>' +
+                menuItems.map(item => 
+                    `<option value="${item.id}">${item.name} - £${item.sellingPrice.toFixed(2)}</option>`
+                ).join('');
+        }
+
+        // Calculate costs with VAT
+        document.getElementById('menuItemSelect').addEventListener('change', function() {
+            const itemId = this.value;
+            const vatRate = parseFloat(document.getElementById('vatRate').value) || 0;
+            
+            if (!itemId) {
+                document.getElementById('costBreakdown').style.display = 'none';
+                return;
+            }
+            
+            const menuItem = menuItems.find(item => item.id === itemId);
+            if (!menuItem) return;
+            
+            const totalCost = menuItem.ingredients.reduce((sum, ing) => 
+                sum + (ing.cost / ing.portionSize * ing.quantity), 0);
+            
+            const sellingPriceExVAT = menuItem.sellingPrice;
+            const sellingPriceIncVAT = sellingPriceExVAT * (1 + vatRate / 100);
+            const vatAmount = sellingPriceIncVAT - sellingPriceExVAT;
+            const profitExVAT = sellingPriceExVAT - totalCost;
+            const profitIncVAT = sellingPriceIncVAT - totalCost;
+            const profitMarginExVAT = ((profitExVAT / sellingPriceExVAT) * 100).toFixed(1);
+            const profitMarginIncVAT = ((profitIncVAT / sellingPriceIncVAT) * 100).toFixed(1);
+            
+            const breakdown = `
+                <div class="cost-row">
+                    <span>Food Cost:</span>
+                    <span>£${totalCost.toFixed(2)}</span>
+                </div>
+                <div class="cost-row">
+                    <span>Selling Price (ex VAT):</span>
+                    <span>£${sellingPriceExVAT.toFixed(2)}</span>
+                </div>
+                <div class="cost-row">
+                    <span>VAT (${vatRate}%):</span>
+                    <span>£${vatAmount.toFixed(2)}</span>
+                </div>
+                <div class="cost-row total">
+                    <span>Selling Price (inc VAT):</span>
+                    <span>£${sellingPriceIncVAT.toFixed(2)}</span>
+                </div>
+                <div class="cost-row">
+                    <span>Profit (ex VAT):</span>
+                    <span>£${profitExVAT.toFixed(2)} (${profitMarginExVAT}%)</span>
+                </div>
+                <div class="cost-row">
+                    <span>Profit (inc VAT):</span>
+                    <span>£${profitIncVAT.toFixed(2)} (${profitMarginIncVAT}%)</span>
+                </div>
+                
+                <h4 style="margin-top: 20px; margin-bottom: 10px;">Ingredient Breakdown:</h4>
+                ${menuItem.ingredients.map(ing => {
+                    const ingCost = (ing.cost / ing.portionSize * ing.quantity);
+                    return `<div class="cost-row">
+                        <span>${ing.name} (×${ing.quantity}):</span>
+                        <span>£${ingCost.toFixed(3)}</span>
+                    </div>`;
+                }).join('')}
+            `;
+            
+            document.getElementById('breakdownContent').innerHTML = breakdown;
+            document.getElementById('costBreakdown').style.display = 'block';
+        });
+
+        // Update VAT calculation when rate changes
+        document.getElementById('vatRate').addEventListener('input', function() {
+            const selectedItem = document.getElementById('menuItemSelect').value;
+            if (selectedItem) {
+                document.getElementById('menuItemSelect').dispatchEvent(new Event('change'));
+            }
+        });
+
+        // Export to Google Docs format
+        function exportToGoogleDocs() {
+            const currentDate = new Date().toLocaleDateString('en-GB');
+            let report = `FOOD COST MANAGEMENT REPORT
+Generated: ${currentDate}
+
+=======================================
+INGREDIENTS INVENTORY
+=======================================
+
+`;
+
+            ingredients.forEach(ingredient => {
+                const costPerPortion = (ingredient.cost / ingredient.portionSize).toFixed(3);
+                report += `${ingredient.name}
+• Cost: £${ingredient.cost} per ${ingredient.unit}
+• Portion Size: ${ingredient.portionSize} ${ingredient.unit}
+• Cost per Portion: £${costPerPortion}
+
+`;
+            });
+
+            report += `
+=======================================
+MENU ITEMS
+=======================================
+
+`;
+
+            menuItems.forEach(item => {
+                const totalCost = item.ingredients.reduce((sum, ing) => 
+                    sum + (ing.cost / ing.portionSize * ing.quantity), 0);
+                const profit = item.sellingPrice - totalCost;
+                const profitMargin = ((profit / item.sellingPrice) * 100).toFixed(1);
+
+                report += `${item.name}
+• Selling Price: £${item.sellingPrice.toFixed(2)}
+• Food Cost: £${totalCost.toFixed(2)}
+• Profit: £${profit.toFixed(2)} (${profitMargin}%)
+
+Ingredients:
+`;
+                item.ingredients.forEach(ing => {
+                    const ingCost = (ing.cost / ing.portionSize * ing.quantity);
+                    report += `  - ${ing.name}: ${ing.quantity} portions @ £${ingCost.toFixed(3)}\n`;
+                });
+                report += '\n';
+            });
+
+            // Calculate summary statistics
+            if (menuItems.length > 0) {
+                const avgProfit = menuItems.reduce((sum, item) => {
+                    const totalCost = item.ingredients.reduce((sum, ing) => 
+                        sum + (ing.cost / ing.portionSize * ing.quantity), 0);
+                    return sum + (item.sellingPrice - totalCost);
+                }, 0) / menuItems.length;
+
+                const avgMargin = menuItems.reduce((sum, item) => {
+                    const totalCost = item.ingredients.reduce((sum, ing) => 
+                        sum + (ing.cost / ing.portionSize * ing.quantity), 0);
+                    const profit = item.sellingPrice - totalCost;
+                    return sum + ((profit / item.sellingPrice) * 100);
+                }, 0) / menuItems.length;
+
+                report += `
+=======================================
+SUMMARY STATISTICS
+=======================================
+
+Total Ingredients: ${ingredients.length}
+Total Menu Items: ${menuItems.length}
+Average Profit per Item: £${avgProfit.toFixed(2)}
+Average Profit Margin: ${avgMargin.toFixed(1)}%
+
+`;
+            }
+
+            document.getElementById('exportText').value = report;
+            document.getElementById('exportOutput').style.display = 'block';
+        }
+
+        // Copy to clipboard
+        function copyToClipboard() {
+            const textarea = document.getElementById('exportText');
+            textarea.select();
+            document.execCommand('copy');
+            alert('Report copied to clipboard! You can now paste it into Google Docs.');
+        }
+
+        // Download JSON backup
+        function downloadBackup() {
+            const data = {
+                ingredients: ingredients,
+                menuItems: menuItems,
+                exportDate: new Date().toISOString(),
+                version: '1.0'
+            };
+
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `food-cost-backup-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+        }
+
+        // Restore from backup
+        function restoreBackup() {
+            const fileInput = document.getElementById('restoreFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a backup file first');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    if (data.ingredients && data.menuItems) {
+                        if (confirm('This will replace all your current data. Are you sure?')) {
+                            ingredients = data.ingredients;
+                            menuItems = data.menuItems;
+                            saveData();
+                            displayIngredients();
+                            displayMenuItems();
+                            populateIngredientSelect();
+                            populateMenuSelect();
+                            alert('Data restored successfully!');
+                            fileInput.value = '';
+                        }
+                    } else {
+                        alert('Invalid backup file format');
+                    }
+                } catch (error) {
+                    alert('Error reading backup file');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Reset all data
+        function resetAllData() {
+            if (confirm('Are you absolutely sure? This will delete ALL your ingredients and menu items permanently.')) {
+                if (confirm('Last chance! This cannot be undone.')) {
+                    ingredients = [];
+                    menuItems = [];
+                    selectedIngredients = [];
+                    saveData();
+                    displayIngredients();
+                    displayMenuItems();
+                    displaySelectedIngredients();
+                    populateIngredientSelect();
+                    populateMenuSelect();
+                    document.getElementById('costBreakdown').style.display = 'none';
+                    alert('All data has been reset');
+                }
+            }
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeFirebase();
+            initializeHomePage();
+        });
+    </script>
+</body>
+</html>
