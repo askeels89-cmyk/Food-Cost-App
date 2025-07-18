@@ -822,7 +822,9 @@
                     const totalCost = item.ingredients.reduce((sum, ing) => 
                         sum + (ing.cost / ing.portionSize * ing.quantity), 0);
                     const profit = item.sellingPrice - totalCost;
-                    return sum + ((profit / item.sellingPrice) * 100);
+                    // Ensure we don't divide by zero
+                    const margin = item.sellingPrice > 0 ? (profit / item.sellingPrice) * 100 : 0;
+                    return sum + margin;
                 }, 0) / menuItems.length;
                 
                 document.getElementById('avgMargin').textContent = avgMargin.toFixed(1) + '%';
@@ -1254,14 +1256,15 @@
                     const totalCost = item.ingredients.reduce((sum, ing) => 
                         sum + (ing.cost / ing.portionSize * ing.quantity), 0);
                     const profit = item.sellingPrice - totalCost;
-                    const profitMargin = ((profit / item.sellingPrice) * 100).toFixed(1);
+                    const profitMargin = item.sellingPrice > 0 ? ((profit / item.sellingPrice) * 100).toFixed(1) : '0.0';
+                    const foodCostPercentage = item.sellingPrice > 0 ? ((totalCost / item.sellingPrice) * 100).toFixed(1) : '0.0';
                     
                     return `
                         <div class="menu-item">
                             <h3>${item.name}</h3>
                             <div class="menu-info">
                                 Selling Price: £${item.sellingPrice.toFixed(2)}<br>
-                                Food Cost: £${totalCost.toFixed(2)}<br>
+                                Food Cost: £${totalCost.toFixed(2)} (${foodCostPercentage}%)<br>
                                 Profit: £${profit.toFixed(2)} (${profitMargin}%)<br>
                                 Ingredients: ${item.ingredients.length}
                             </div>
@@ -1376,16 +1379,27 @@
             // Show scaling section
             document.getElementById('scalingSection').style.display = 'block';
             
+            // Calculate total food cost (scaled)
             const totalCost = menuItem.ingredients.reduce((sum, ing) => 
                 sum + (ing.cost / ing.portionSize * ing.quantity * scale), 0);
             
+            // Base selling price (scaled, excluding VAT)
             const sellingPriceExVAT = menuItem.sellingPrice * scale;
-            const sellingPriceIncVAT = sellingPriceExVAT * (1 + vatRate / 100);
-            const vatAmount = sellingPriceIncVAT - sellingPriceExVAT;
+            
+            // VAT calculations
+            const vatAmount = sellingPriceExVAT * (vatRate / 100);
+            const sellingPriceIncVAT = sellingPriceExVAT + vatAmount;
+            
+            // Profit calculations
             const profitExVAT = sellingPriceExVAT - totalCost;
             const profitIncVAT = sellingPriceIncVAT - totalCost;
-            const profitMarginExVAT = ((profitExVAT / sellingPriceExVAT) * 100).toFixed(1);
-            const profitMarginIncVAT = ((profitIncVAT / sellingPriceIncVAT) * 100).toFixed(1);
+            
+            // Profit margin calculations (both based on respective selling prices)
+            const profitMarginExVAT = sellingPriceExVAT > 0 ? ((profitExVAT / sellingPriceExVAT) * 100).toFixed(1) : '0.0';
+            const profitMarginIncVAT = sellingPriceIncVAT > 0 ? ((profitIncVAT / sellingPriceIncVAT) * 100).toFixed(1) : '0.0';
+            
+            // Food cost percentage
+            const foodCostPercentage = sellingPriceExVAT > 0 ? ((totalCost / sellingPriceExVAT) * 100).toFixed(1) : '0.0';
             
             const breakdown = `
                 ${scale !== 1 ? `<div class="cost-row" style="background: #f0f8ff; padding: 10px; border-radius: 5px; margin-bottom: 10px;">
@@ -1393,7 +1407,7 @@
                 </div>` : ''}
                 <div class="cost-row">
                     <span>Food Cost:</span>
-                    <span>£${totalCost.toFixed(2)}</span>
+                    <span>£${totalCost.toFixed(2)} (${foodCostPercentage}%)</span>
                 </div>
                 <div class="cost-row">
                     <span>Selling Price (ex VAT):</span>
@@ -1418,13 +1432,22 @@
                 
                 <h4 style="margin-top: 20px; margin-bottom: 10px;">Ingredient Breakdown:</h4>
                 ${menuItem.ingredients.map(ing => {
-                    const ingCost = (ing.cost / ing.portionSize * ing.quantity * scale);
-                    const scaledQuantity = (ing.quantity * scale).toFixed(2);
+                    const costPerPortion = ing.cost / ing.portionSize;
+                    const scaledQuantity = ing.quantity * scale;
+                    const ingCost = costPerPortion * scaledQuantity;
                     return `<div class="cost-row">
-                        <span>${ing.name} (×${scaledQuantity}):</span>
+                        <span>${ing.name} (${scaledQuantity.toFixed(2)} portions @ £${costPerPortion.toFixed(3)}):</span>
                         <span>£${ingCost.toFixed(3)}</span>
                     </div>`;
                 }).join('')}
+                
+                <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 12px; color: #666;">
+                    <strong>Calculation Notes:</strong><br>
+                    • Food cost percentage = (Food Cost ÷ Selling Price ex VAT) × 100<br>
+                    • Profit margin ex VAT = (Profit ex VAT ÷ Selling Price ex VAT) × 100<br>
+                    • Profit margin inc VAT = (Profit inc VAT ÷ Selling Price inc VAT) × 100<br>
+                    • Cost per portion = Ingredient cost ÷ Portion size
+                </div>
             `;
             
             document.getElementById('breakdownContent').innerHTML = breakdown;
@@ -1483,18 +1506,20 @@ MENU ITEMS
                 const totalCost = item.ingredients.reduce((sum, ing) => 
                     sum + (ing.cost / ing.portionSize * ing.quantity), 0);
                 const profit = item.sellingPrice - totalCost;
-                const profitMargin = ((profit / item.sellingPrice) * 100).toFixed(1);
+                const profitMargin = item.sellingPrice > 0 ? ((profit / item.sellingPrice) * 100).toFixed(1) : '0.0';
+                const foodCostPercentage = item.sellingPrice > 0 ? ((totalCost / item.sellingPrice) * 100).toFixed(1) : '0.0';
 
                 report += `${item.name}
 • Selling Price: £${item.sellingPrice.toFixed(2)}
-• Food Cost: £${totalCost.toFixed(2)}
+• Food Cost: £${totalCost.toFixed(2)} (${foodCostPercentage}%)
 • Profit: £${profit.toFixed(2)} (${profitMargin}%)
 
 Ingredients:
 `;
                 item.ingredients.forEach(ing => {
-                    const ingCost = (ing.cost / ing.portionSize * ing.quantity);
-                    report += `  - ${ing.name}: ${ing.quantity} portions @ £${ingCost.toFixed(3)}\n`;
+                    const costPerPortion = ing.cost / ing.portionSize;
+                    const ingCost = costPerPortion * ing.quantity;
+                    report += `  - ${ing.name}: ${ing.quantity} portions @ £${costPerPortion.toFixed(3)} = £${ingCost.toFixed(3)}\n`;
                 });
                 report += '\n';
             });
